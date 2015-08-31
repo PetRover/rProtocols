@@ -5,4 +5,11 @@
 #ifndef FIRMWARE_PROTOCOLS_H
 #define FIRMWARE_PROTOCOLS_H
 
+namespace RVR
+{
+    class Protocols
+    {
+
+    };
+}
 #endif //FIRMWARE_PROTOCOLS_H
