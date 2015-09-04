@@ -69,6 +69,16 @@ namespace RVR
         // Send a string of data to the specified property of the pin
         int writeToProperty(PinProperty property,
                             std::string dataString); // TODO make this function more robust by changing the type of dataString to a custom Enum type that only allows sending valid commands
+
+        //overload writeToProperty to allowing writing ints
+        int writeToProperty(PinProperty property, int data);
+
+        //overload writeToProperty to allowing writing longs
+        int writeToProperty(PinProperty property, long data);
+
+        //overload writeToProperty to allowing writing floats
+        int writeToProperty(PinProperty property, float data);
+
         // Reads the value of the specified property of the pin
         std::string readFromProperty(PinProperty property);
 

@@ -82,6 +82,27 @@ int RVR::Pin::writeToProperty(RVR::PinProperty property, std::string dataString)
     return 0;
 }
 
+int RVR::Pin::writeToProperty(RVR::PinProperty property, int data)
+{
+    std::string propertyPath = this->getPropertyFilePath(property);
+    this->writeToFile(propertyPath, data);
+    return 0;
+}
+
+int RVR::Pin::writeToProperty(RVR::PinProperty property, long data)
+{
+    std::string propertyPath = this->getPropertyFilePath(property);
+    this->writeToFile(propertyPath, data);
+    return 0;
+}
+
+int RVR::Pin::writeToProperty(RVR::PinProperty property, float data)
+{
+    std::string propertyPath = this->getPropertyFilePath(property);
+    this->writeToFile(propertyPath, data);
+    return 0;
+}
+
 std::string RVR::Pin::readFromProperty(RVR::PinProperty property)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
