@@ -14,8 +14,8 @@
 //}
 
 const std::string RVR::GpioPin::PIN_BASE_PATH = "/dev/gpio/"; // TODO make this the correct path
-const std::string RVR::AdcPin::PIN_BASE_PATH = "/dev/adc/"; // TODO make this the correct path
-const std::string RVR::PwmPin::PIN_BASE_PATH = "/dev/pwm/"; // TODO make this the correct path
+const std::string RVR::AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
+const std::string RVR::PwmPin::PIN_BASE_PATH = "/sys/class/pwm/"; // TODO make this the correct path
 
 // ==============================================================
 // Pin Class Member functions
@@ -30,6 +30,12 @@ std::string RVR::Pin::getPropertyFilePath(RVR::PinProperty property)
             return this->PIN_BASE_PATH + "%d/value.file?"; // TODO make this the correct path
         case RVR::PinProperty::DIRECTION:
             return this->PIN_BASE_PATH + "%d/direction.file?"; // TODO make this the correct path
+        case RVR::PinProperty::ADC_VALUE:
+            return this->PIN_BASE_PATH + "%d/ocp.2/helper.14/AIN0"; //TODO change AIN0 to corresponding analog input
+        case RVR::PinProperty::PWM_DUTY:
+            return this->PIN_BASE_PATH + "%d/pwm4/duty_ns";  //TODO change PWM4 to corresponding export number
+        case RVR::PinProperty::PWM_PERIOD:
+            return this->PIN_BASE_PATH + "%d/pwm4/period_ns";  //TODO change PWM4 to corresponding export number
     }
 }
 
@@ -185,6 +191,14 @@ RVR::AdcPin::AdcPin(int pinNumber)
     this->pinNumber = pinNumber;
 }
 
+long RVR::AdcPin::getValue()
+{
+    long value;
+    std::string valueString = this->readFromProperty(RVR::PinProperty::ADC_VALUE);
+    value = std::stol(valueString);  //string to long conversion
+    return value;
+}
+
 // ==============================================================
 // PwmPin Class Member functions
 // ==============================================================
@@ -192,4 +206,16 @@ RVR::AdcPin::AdcPin(int pinNumber)
 RVR::PwmPin::PwmPin(int pinNumber)
 {
     this->pinNumber = pinNumber;
+}
+
+int RVR::PwmPin::setPeriod(int period)
+{
+    this->writeToProperty(RVR::PinProperty::PWM_PERIOD, period);
+    return 0;
+}
+
+int RVR::PwmPin::setDutyCycle(int dutyCycle)
+{
+    this->writeToProperty(RVR::PinProperty::PWM_DUTY, dutyCycle);
+    return 0;
 }

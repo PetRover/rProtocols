@@ -31,7 +31,10 @@ namespace RVR
     enum class PinProperty
     {
         VALUE, // The logic level value of a pin
-        DIRECTION // The direction (in or out) of a pin
+        DIRECTION, // The direction (in or out) of a pin
+        ADC_VALUE,  // Analog value from the ADC
+        PWM_DUTY,
+        PWM_PERIOD
     };
 
 
@@ -112,7 +115,7 @@ namespace RVR
 
         AdcPin(int pinNumber);
 
-        long getValue(); // TODO implemnt this
+        long getValue();
     };
 
     // Subclass of Pin used to represent pins that are configured as PWMs
@@ -125,7 +128,8 @@ namespace RVR
 
         PwmPin(int pinNumber);
 
-        int setValue(int pwmValue); // TODO implement this
+        int setPeriod(int period);
+        int setDutyCycle(int dutyCycle);
     };
 };
 #endif //RCORE_GPIO_H
