@@ -66,8 +66,12 @@ namespace RVR
     protected:
         // Integer value corresponding to the pin number which this Pin instance represents
         int pinNumber;
+
         // The base path to where this type of pins' sysfs files are located
         static const std::string PIN_BASE_PATH; // TODO make sure this works and we do not need to implement a "getPinBasePath" virtual function see (http://stackoverflow.com/questions/10915568/is-it-possible-to-declare-a-virtual-static-constant-value-in-a-c-class)
+
+        // The directory to access the specific pin within the PIN_BASE_PATH directory
+        std::string pinDirectory;
 
         // Send a string of data to the specified property of the pin
         int writeToProperty(PinProperty property,
@@ -127,6 +131,8 @@ namespace RVR
 
         AdcPin(int pinNumber);
 
+        int getAdcPort(int pinNumber);
+
         long getValue();
     };
 
@@ -139,6 +145,8 @@ namespace RVR
         PwmPin() { };
 
         PwmPin(int pinNumber);
+
+        int getPwmPort(int pinNumber);
 
         int setPeriod(int period);
         int setDutyCycle(int dutyCycle);

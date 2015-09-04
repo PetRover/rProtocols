@@ -13,7 +13,7 @@
 //	this->setDirection(direction);
 //}
 
-const std::string RVR::GpioPin::PIN_BASE_PATH = "/dev/gpio/"; // TODO make this the correct path
+const std::string RVR::GpioPin::PIN_BASE_PATH = "/sys/class/gpio/"; // TODO make this the correct path
 const std::string RVR::AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
 const std::string RVR::PwmPin::PIN_BASE_PATH = "/sys/class/pwm/"; // TODO make this the correct path
 
@@ -26,16 +26,15 @@ std::string RVR::Pin::getPropertyFilePath(RVR::PinProperty property)
     switch (property)
     {
         case RVR::PinProperty::VALUE:
-            // NOTE %d should get replaced with this->pinNumber somehow
-            return this->PIN_BASE_PATH + "%d/value.file?"; // TODO make this the correct path
+            return this->PIN_BASE_PATH + "gpio" + std::to_string(this->pinNumber) + "/value";
         case RVR::PinProperty::DIRECTION:
-            return this->PIN_BASE_PATH + "%d/direction.file?"; // TODO make this the correct path
+            return this->PIN_BASE_PATH + "gpio" + std::to_string(this->pinNumber) + "/direction";
         case RVR::PinProperty::ADC_VALUE:
-            return this->PIN_BASE_PATH + "%d/ocp.2/helper.14/AIN0"; //TODO change AIN0 to corresponding analog input
+            return this->PIN_BASE_PATH + "/ocp.2/helper.14/" + this->pinDirectory;
         case RVR::PinProperty::PWM_DUTY:
-            return this->PIN_BASE_PATH + "%d/pwm4/duty_ns";  //TODO change PWM4 to corresponding export number
+            return this->PIN_BASE_PATH + this->pinDirectory + "/duty_ns";
         case RVR::PinProperty::PWM_PERIOD:
-            return this->PIN_BASE_PATH + "%d/pwm4/period_ns";  //TODO change PWM4 to corresponding export number
+            return this->PIN_BASE_PATH + this->pinDirectory + "/period_ns";
     }
 }
 
@@ -127,6 +126,7 @@ std::string RVR::Pin::readFromProperty(RVR::PinProperty property)
 RVR::GpioPin::GpioPin(int pinNumber, RVR::GpioDirection direction)
 {
     this->pinNumber = pinNumber;
+    this->pinDirectory = "gpio" +  std::to_string(this->pinNumber);
     this->setDirection(direction);
 }
 
@@ -212,8 +212,8 @@ RVR::GpioDirection RVR::GpioPin::getDirection()
 
 RVR::AdcPin::AdcPin(int pinNumber)
 {
-
     this->pinNumber = pinNumber;
+    this->pinDirectory = "AIN" + std::to_string(getAdcPort(this->pinNumber));
 }
 
 long RVR::AdcPin::getValue()
@@ -224,6 +224,27 @@ long RVR::AdcPin::getValue()
     return value;
 }
 
+//returns the AIN port number associated with the pin which is needed to read from pin
+int RVR::AdcPin::getAdcPort(int pinNumber)
+{
+    switch(pinNumber) {
+        case 85: // pin 9_39
+            return 0;
+        case 86: // pin 9_40
+            return 1;
+        case 83: // pin 9_37
+            return 2;
+        case 84: // pin 9_38
+            return 3;
+        case 79: // pin 9_33
+            return 4;
+        case 82: // pin 9_36
+            return 5;
+        case 81: // pin 9_35
+            return 6;
+    }
+}
+
 // ==============================================================
 // PwmPin Class Member functions
 // ==============================================================
@@ -231,6 +252,42 @@ long RVR::AdcPin::getValue()
 RVR::PwmPin::PwmPin(int pinNumber)
 {
     this->pinNumber = pinNumber;
+    this->pinDirectory = "pwm" + std::to_string(getPwmPort(this->pinNumber));
+}
+
+//returns the PWM port number associated with the pin which is needed to export the pin
+int RVR::PwmPin::getPwmPort(int pinNumber)
+{
+    switch(pinNumber) {
+        case 68: // pin 9_22
+            return 0;
+        case 77: // pin 9_31
+            return 0;
+        case 67: // pin 9_21
+            return 1;
+        case 75: // pin 9_29
+            return 1;
+        case 88: // pin 9_42
+            return 2;
+        case 60: // pin 9_14
+            return 3;
+        case 36: // pin 8_36
+            return 3;
+        case 62: // pin 9_16
+            return 4;
+        case 34: // pin_8_34
+            return 4;
+        case 19: // pin 8_19
+            return 5;
+        case 45: // pin 8_45
+            return 5;
+        case 13: // pin 8_13
+            return 6;
+        case 46: // pin 8_46
+            return 6;
+        case 74: // pin 9_28
+            return 7;
+    }
 }
 
 int RVR::PwmPin::setPeriod(int period)
