@@ -5,6 +5,8 @@
 #ifndef FIRMWARE_PROTOCOLS_H
 #define FIRMWARE_PROTOCOLS_H
 
+#include "pins.h"
+
 namespace RVR
 {
     class Protocols
