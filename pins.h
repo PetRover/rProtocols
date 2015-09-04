@@ -51,6 +51,15 @@ namespace RVR
         // Writes an arbitrary string to a file given by the 'path' parameter
         int writeToFile(std::string path, std::string data);
 
+        // Overlaods WriteToFile to allow writing ints
+        int writeToFile(std::string path, int data);
+
+        // Overlaods WriteToFile to allow writing longs
+        int writeToFile(std::string path, long data);
+
+        // Overlaods WriteToFile to allow writing floats
+        int writeToFile(std::string path, float data);
+
         // Returns the first line of the file given by the 'path' parameter
         std::string readFromFile(std::string path);
 
@@ -64,13 +73,13 @@ namespace RVR
         int writeToProperty(PinProperty property,
                             std::string dataString); // TODO make this function more robust by changing the type of dataString to a custom Enum type that only allows sending valid commands
 
-        //overload writeToProperty to allowing writing ints
+        // Overloads writeToProperty to allowing writing ints
         int writeToProperty(PinProperty property, int data);
 
-        //overload writeToProperty to allowing writing longs
+        // Overloads writeToProperty to allowing writing longs
         int writeToProperty(PinProperty property, long data);
 
-        //overload writeToProperty to allowing writing floats
+        // Overloads writeToProperty to allowing writing floats
         int writeToProperty(PinProperty property, float data);
 
         // Reads the value of the specified property of the pin

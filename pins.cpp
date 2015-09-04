@@ -48,6 +48,33 @@ int RVR::Pin::writeToFile(std::string path, std::string data)
     return 0;
 }
 
+int RVR::Pin::writeToFile(std::string path, int data)
+{
+    std::ofstream writeFile;
+    writeFile.open(path);
+    writeFile << data;
+    writeFile.close();
+    return 0;
+}
+
+int RVR::Pin::writeToFile(std::string path, long data)
+{
+    std::ofstream writeFile;
+    writeFile.open(path);
+    writeFile << data;
+    writeFile.close();
+    return 0;
+}
+
+int RVR::Pin::writeToFile(std::string path, float data)
+{
+    std::ofstream writeFile;
+    writeFile.open(path);
+    writeFile << data;
+    writeFile.close();
+    return 0;
+}
+
 std::string RVR::Pin::readFromFile(std::string path)
 {
 
