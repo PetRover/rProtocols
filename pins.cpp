@@ -58,23 +58,6 @@ std::string RVR::Pin::readFromFile(std::string path)
     return result;
 }
 
-int RVR::Pin::exportPin()
-{
-    this->writeToFile(this->PIN_BASE_PATH + "export",
-                      "placeholder"); // TODO replace placeholder with this->pinNumber cast to string
-
-    return 0;
-}
-
-int RVR::Pin::unexportPin()
-{
-    this->writeToFile(this->PIN_BASE_PATH + "unexport",
-                      "placeholder"); // TODO replace placeholder with this->pinNumber cast to string
-
-    return 0;
-}
-
-
 int RVR::Pin::writeToProperty(RVR::PinProperty property, std::string dataString)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
@@ -89,11 +72,6 @@ std::string RVR::Pin::readFromProperty(RVR::PinProperty property)
     return propertyValue;
 }
 
-RVR::Pin::~Pin()
-{
-    this->unexportPin();
-}
-
 // ==============================================================
 // GpioPin Class Member functions
 // ==============================================================
@@ -101,7 +79,6 @@ RVR::Pin::~Pin()
 RVR::GpioPin::GpioPin(int pinNumber, RVR::GpioDirection direction)
 {
     this->pinNumber = pinNumber;
-    this->exportPin();
     this->setDirection(direction);
 }
 

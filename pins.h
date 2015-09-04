@@ -60,12 +60,6 @@ namespace RVR
         // The base path to where this type of pins' sysfs files are located
         static const std::string PIN_BASE_PATH; // TODO make sure this works and we do not need to implement a "getPinBasePath" virtual function see (http://stackoverflow.com/questions/10915568/is-it-possible-to-declare-a-virtual-static-constant-value-in-a-c-class)
 
-        // Export the pin so that it can be controlled with the sysfs interface
-        int exportPin();
-
-        // Unexport the pin so that it is not longer controlled with the sysfs interface
-        int unexportPin();
-
         // Send a string of data to the specified property of the pin
         int writeToProperty(PinProperty property,
                             std::string dataString); // TODO make this function more robust by changing the type of dataString to a custom Enum type that only allows sending valid commands
@@ -73,7 +67,6 @@ namespace RVR
         std::string readFromProperty(PinProperty property);
 
     public:
-        ~Pin();
     };
 
     // Subclass of Pin used to represent pins that are configured as GPIOs
