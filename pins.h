@@ -51,13 +51,13 @@ namespace RVR
         // Writes an arbitrary string to a file given by the 'path' parameter
         int writeToFile(std::string path, std::string data);
 
-        // Overlaods WriteToFile to allow writing ints
+        // Overloads WriteToFile to allow writing ints
         int writeToFile(std::string path, int data);
 
-        // Overlaods WriteToFile to allow writing longs
+        // Overloads WriteToFile to allow writing longs
         int writeToFile(std::string path, long data);
 
-        // Overlaods WriteToFile to allow writing floats
+        // Overloads WriteToFile to allow writing floats
         int writeToFile(std::string path, float data);
 
         // Returns the first line of the file given by the 'path' parameter
@@ -68,14 +68,15 @@ namespace RVR
         int pinNumber;
 
         // The base path to where this type of pins' sysfs files are located
-        static const std::string PIN_BASE_PATH; // TODO make sure this works and we do not need to implement a "getPinBasePath" virtual function see (http://stackoverflow.com/questions/10915568/is-it-possible-to-declare-a-virtual-static-constant-value-in-a-c-class)
+        static const std::string PIN_BASE_PATH;
+
+        virtual std::string getPinBasePath() = 0; // https://github.com/PetRover/rProtocols/issues/5
 
         // The directory to access the specific pin within the PIN_BASE_PATH directory
         std::string pinDirectory;
 
         // Send a string of data to the specified property of the pin
-        int writeToProperty(PinProperty property,
-                            std::string dataString); // TODO make this function more robust by changing the type of dataString to a custom Enum type that only allows sending valid commands
+        int writeToProperty(PinProperty property, std::string dataString);
 
         // Overloads writeToProperty to allowing writing ints
         int writeToProperty(PinProperty property, int data);
@@ -98,6 +99,8 @@ namespace RVR
     protected:
         // Subclassed property. See Pin class
         static const std::string PIN_BASE_PATH;
+
+        std::string getPinBasePath(); // https://github.com/PetRover/rProtocols/issues/5
     public:
 
 
@@ -126,6 +129,8 @@ namespace RVR
     {
     protected:
         static const std::string PIN_BASE_PATH;
+
+        std::string getPinBasePath(); // https://github.com/PetRover/rProtocols/issues/5
     public:
         AdcPin() { };
 
@@ -140,7 +145,9 @@ namespace RVR
     class PwmPin : public Pin
     {
     protected:
-        static const std::string PIN_BASE_PATH;
+        static const std::string PIN_BASE_PATH; // https://github.com/PetRover/rProtocols/issues/5
+
+        std::string getPinBasePath();
     public:
         PwmPin() { };
 

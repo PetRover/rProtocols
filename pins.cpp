@@ -26,15 +26,15 @@ std::string RVR::Pin::getPropertyFilePath(RVR::PinProperty property)
     switch (property)
     {
         case RVR::PinProperty::VALUE:
-            return this->PIN_BASE_PATH + "gpio" + std::to_string(this->pinNumber) + "/value";
+            return this->getPinBasePath() + "gpio" + std::to_string(this->pinNumber) + "/value";
         case RVR::PinProperty::DIRECTION:
-            return this->PIN_BASE_PATH + "gpio" + std::to_string(this->pinNumber) + "/direction";
+            return this->getPinBasePath() + "gpio" + std::to_string(this->pinNumber) + "/direction";
         case RVR::PinProperty::ADC_VALUE:
-            return this->PIN_BASE_PATH + "/ocp.2/helper.14/" + this->pinDirectory;
+            return this->getPinBasePath() + "/ocp.2/helper.14/" + this->pinDirectory;
         case RVR::PinProperty::PWM_DUTY:
-            return this->PIN_BASE_PATH + this->pinDirectory + "/duty_ns";
+            return this->getPinBasePath() + this->pinDirectory + "/duty_ns";
         case RVR::PinProperty::PWM_PERIOD:
-            return this->PIN_BASE_PATH + this->pinDirectory + "/period_ns";
+            return this->getPinBasePath() + this->pinDirectory + "/period_ns";
     }
 }
 
@@ -130,6 +130,11 @@ RVR::GpioPin::GpioPin(int pinNumber, RVR::GpioDirection direction)
     this->setDirection(direction);
 }
 
+std::string RVR::GpioPin::getPinBasePath()
+{
+    return RVR::GpioPin::PIN_BASE_PATH;
+}
+
 int RVR::GpioPin::setValue(RVR::GpioValue value)
 {
     switch (value)
@@ -216,6 +221,11 @@ RVR::AdcPin::AdcPin(int pinNumber)
     this->pinDirectory = "AIN" + std::to_string(getAdcPort(this->pinNumber));
 }
 
+std::string RVR::AdcPin::getPinBasePath()
+{
+    return RVR::AdcPin::PIN_BASE_PATH;
+}
+
 long RVR::AdcPin::getValue()
 {
     long value;
@@ -255,6 +265,11 @@ RVR::PwmPin::PwmPin(int pinNumber)
     this->pinDirectory = "pwm" + std::to_string(getPwmPort(this->pinNumber));
 }
 
+std::string RVR::PwmPin::getPinBasePath()
+{
+    return RVR::PwmPin::PIN_BASE_PATH;
+}
+
 //returns the PWM port number associated with the pin which is needed to export the pin
 int RVR::PwmPin::getPwmPort(int pinNumber)
 {
@@ -288,6 +303,7 @@ int RVR::PwmPin::getPwmPort(int pinNumber)
         case 74: // pin 9_28
             return 7;
     }
+    return -1; // TODO Implement error handing for this
 }
 
 int RVR::PwmPin::setPeriod(int period)
