@@ -34,7 +34,8 @@ namespace RVR
         DIRECTION, // The direction (in or out) of a pin
         ADC_VALUE,  // Analog value from the ADC
         PWM_DUTY,
-        PWM_PERIOD
+        PWM_PERIOD,
+        PWM_RUN
     };
 
 
@@ -50,15 +51,6 @@ namespace RVR
 
         // Writes an arbitrary string to a file given by the 'path' parameter
         int writeToFile(std::string path, std::string data);
-
-        // Overloads WriteToFile to allow writing ints
-        int writeToFile(std::string path, int data);
-
-        // Overloads WriteToFile to allow writing longs
-        int writeToFile(std::string path, long data);
-
-        // Overloads WriteToFile to allow writing floats
-        int writeToFile(std::string path, float data);
 
         // Returns the first line of the file given by the 'path' parameter
         std::string readFromFile(std::string path);
@@ -87,8 +79,14 @@ namespace RVR
         // Overloads writeToProperty to allowing writing floats
         int writeToProperty(PinProperty property, float data);
 
-        // Reads the value of the specified property of the pin
-        std::string readFromProperty(PinProperty property);
+        // Reads an int value from the specified property of the pin
+        int readIntFromProperty(PinProperty property);
+
+        // Reads a double value from the specified property of the pin
+        double readDoubleFromProperty(PinProperty property);
+
+        // Reads a string value from the specified property of the pin
+        std::string readStringFromProperty(PinProperty property);
 
     public:
     };
@@ -138,7 +136,7 @@ namespace RVR
 
         int getAdcPort(int pinNumber);
 
-        long getValue();
+        double getValue();
     };
 
     // Subclass of Pin used to represent pins that are configured as PWMs
@@ -155,8 +153,20 @@ namespace RVR
 
         int getPwmPort(int pinNumber);
 
+        // Returns the period in nanoseconds
+        int getPeriod();
+
+        // Returns the duty cycle in nanoseconds
+        int getDutyCycleTime();
+
+        // period is in nanoseconds
         int setPeriod(int period);
-        int setDutyCycle(int dutyCycle);
+
+        int setDutyCycleTime(int dutyCycleTime_ns);
+
+        int setDutyCyclePercent(double dutyCyclePercent);
+
+        int setEnable(bool enable);
     };
 };
 #endif //RCORE_GPIO_H

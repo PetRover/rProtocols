@@ -6,16 +6,10 @@
 #include <iostream>
 #include <fstream>
 
-//RVR::GpioPin::GpioPin (int pinNumber, RVR::GpioDirection direction)
-//{
-//	this->PIN_PATH = "/dev/gpio";
-//	this->pinNumber = pinNumber;
-//	this->setDirection(direction);
-//}
 
-const std::string RVR::GpioPin::PIN_BASE_PATH = "/sys/class/gpio/"; // TODO make this the correct path
+const std::string RVR::GpioPin::PIN_BASE_PATH = "/sys/class/gpio/";
 const std::string RVR::AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
-const std::string RVR::PwmPin::PIN_BASE_PATH = "/sys/class/pwm/"; // TODO make this the correct path
+const std::string RVR::PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
 
 // ==============================================================
 // Pin Class Member functions
@@ -35,37 +29,12 @@ std::string RVR::Pin::getPropertyFilePath(RVR::PinProperty property)
             return this->getPinBasePath() + this->pinDirectory + "/duty_ns";
         case RVR::PinProperty::PWM_PERIOD:
             return this->getPinBasePath() + this->pinDirectory + "/period_ns";
+        case PinProperty::PWM_RUN:
+            return this->getPinBasePath() + this->pinDirectory + "/run";;
     }
 }
 
 int RVR::Pin::writeToFile(std::string path, std::string data)
-{
-    std::ofstream writeFile;
-    writeFile.open(path);
-    writeFile << data;
-    writeFile.close();
-    return 0;
-}
-
-int RVR::Pin::writeToFile(std::string path, int data)
-{
-    std::ofstream writeFile;
-    writeFile.open(path);
-    writeFile << data;
-    writeFile.close();
-    return 0;
-}
-
-int RVR::Pin::writeToFile(std::string path, long data)
-{
-    std::ofstream writeFile;
-    writeFile.open(path);
-    writeFile << data;
-    writeFile.close();
-    return 0;
-}
-
-int RVR::Pin::writeToFile(std::string path, float data)
 {
     std::ofstream writeFile;
     writeFile.open(path);
@@ -94,25 +63,42 @@ int RVR::Pin::writeToProperty(RVR::PinProperty property, std::string dataString)
 int RVR::Pin::writeToProperty(RVR::PinProperty property, int data)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
-    this->writeToFile(propertyPath, data);
+    std::string dataString = std::to_string(data);
+    this->writeToFile(propertyPath, dataString);
     return 0;
 }
 
 int RVR::Pin::writeToProperty(RVR::PinProperty property, long data)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
-    this->writeToFile(propertyPath, data);
+    std::string dataString = std::to_string(data);
+    this->writeToFile(propertyPath, dataString);
     return 0;
 }
 
 int RVR::Pin::writeToProperty(RVR::PinProperty property, float data)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
-    this->writeToFile(propertyPath, data);
+    std::string dataString = std::to_string(data);
+    this->writeToFile(propertyPath, dataString);
     return 0;
 }
 
-std::string RVR::Pin::readFromProperty(RVR::PinProperty property)
+int RVR::Pin::readIntFromProperty(RVR::PinProperty property)
+{
+    std::string propertyPath = this->getPropertyFilePath(property);
+    int propertyValue = std::stoi(this->readFromFile(propertyPath));
+    return propertyValue;
+}
+
+double RVR::Pin::readDoubleFromProperty(PinProperty property)
+{
+    std::string propertyPath = this->getPropertyFilePath(property);
+    double propertyValue = std::stod(this->readFromFile(propertyPath));
+    return propertyValue;
+}
+
+std::string RVR::Pin::readStringFromProperty(PinProperty property)
 {
     std::string propertyPath = this->getPropertyFilePath(property);
     std::string propertyValue = this->readFromFile(propertyPath);
@@ -127,7 +113,15 @@ RVR::GpioPin::GpioPin(int pinNumber, RVR::GpioDirection direction)
 {
     this->pinNumber = pinNumber;
     this->pinDirectory = "gpio" +  std::to_string(this->pinNumber);
+
+    // Always initialize output pins with a low value
+    if (direction == RVR::GpioDirection::OUT)
+    {
+        this->setValue(RVR::GpioValue::LOW);
+    }
+
     this->setDirection(direction);
+
 }
 
 std::string RVR::GpioPin::getPinBasePath()
@@ -140,10 +134,10 @@ int RVR::GpioPin::setValue(RVR::GpioValue value)
     switch (value)
     {
         case RVR::GpioValue::HIGH:
-            this->writeToProperty(RVR::PinProperty::DIRECTION, "high"); // TODO make this the right value
+            this->writeToProperty(RVR::PinProperty::VALUE, 1);
             break;
         case RVR::GpioValue::LOW:
-            this->writeToProperty(RVR::PinProperty::DIRECTION, "low"); // TODO make this the right value
+            this->writeToProperty(RVR::PinProperty::VALUE, 0);
             break;
         default:
             return -1;
@@ -155,7 +149,7 @@ int RVR::GpioPin::setValue(RVR::GpioValue value)
 RVR::GpioValue RVR::GpioPin::getValue()
 {
     RVR::GpioValue value;
-    std::string directionString = this->readFromProperty(RVR::PinProperty::VALUE);
+    std::string directionString = this->readStringFromProperty(RVR::PinProperty::VALUE);
 
     if (directionString == "high")
     {
@@ -178,10 +172,10 @@ int RVR::GpioPin::setDirection(RVR::GpioDirection direction)
     switch (direction)
     {
         case RVR::GpioDirection::IN:
-            this->writeToProperty(RVR::PinProperty::DIRECTION, "in"); // TODO make this the right value
+            this->writeToProperty(RVR::PinProperty::DIRECTION, "in");
             break;
         case RVR::GpioDirection::OUT:
-            this->writeToProperty(RVR::PinProperty::DIRECTION, "out"); // TODO make this the right value
+            this->writeToProperty(RVR::PinProperty::DIRECTION, "out");
             break;
         default:
             return -1;
@@ -193,7 +187,7 @@ int RVR::GpioPin::setDirection(RVR::GpioDirection direction)
 RVR::GpioDirection RVR::GpioPin::getDirection()
 {
     RVR::GpioDirection direction;
-    std::string directionString = this->readFromProperty(RVR::PinProperty::DIRECTION);
+    std::string directionString = this->readStringFromProperty(RVR::PinProperty::DIRECTION);
 
     if (directionString == "in")
     {
@@ -226,11 +220,9 @@ std::string RVR::AdcPin::getPinBasePath()
     return RVR::AdcPin::PIN_BASE_PATH;
 }
 
-long RVR::AdcPin::getValue()
+double RVR::AdcPin::getValue()
 {
-    long value;
-    std::string valueString = this->readFromProperty(RVR::PinProperty::ADC_VALUE);
-    value = std::stol(valueString);  //string to long conversion
+    double value = this->readDoubleFromProperty(RVR::PinProperty::ADC_VALUE);
     return value;
 }
 
@@ -252,6 +244,8 @@ int RVR::AdcPin::getAdcPort(int pinNumber)
             return 5;
         case 81: // pin 9_35
             return 6;
+        default:
+            return -1;
     }
 }
 
@@ -302,8 +296,21 @@ int RVR::PwmPin::getPwmPort(int pinNumber)
             return 6;
         case 74: // pin 9_28
             return 7;
+        default:
+            return -1; // TODO Implement error handing for this
     }
-    return -1; // TODO Implement error handing for this
+}
+
+int RVR::PwmPin::getPeriod()
+{
+    int period_ns = this->readIntFromProperty(RVR::PinProperty::PWM_PERIOD);
+    return period_ns;
+}
+
+int RVR::PwmPin::getDutyCycleTime()
+{
+    int dutyCycle_ns = this->readIntFromProperty(RVR::PinProperty::PWM_DUTY);
+    return dutyCycle_ns;
 }
 
 int RVR::PwmPin::setPeriod(int period)
@@ -312,8 +319,29 @@ int RVR::PwmPin::setPeriod(int period)
     return 0;
 }
 
-int RVR::PwmPin::setDutyCycle(int dutyCycle)
+int RVR::PwmPin::setDutyCycleTime(int dutyCycle_ns)
 {
-    this->writeToProperty(RVR::PinProperty::PWM_DUTY, dutyCycle);
+    this->writeToProperty(RVR::PinProperty::PWM_DUTY, dutyCycle_ns);
+    return 0;
+}
+
+int RVR::PwmPin::setDutyCyclePercent(double dutyCyclePercent)
+{
+    int period_ns = this->getPeriod();
+    int dutyCycleTime_ns = (int) ((period_ns * 100) / dutyCyclePercent);
+    this->setDutyCycleTime(dutyCycleTime_ns);
+    return 0;
+}
+
+int RVR::PwmPin::setEnable(bool enable)
+{
+    if (enable)
+    {
+        this->writeToProperty(RVR::PinProperty::PWM_RUN, 1);
+    }
+    else
+    {
+        this->writeToProperty(RVR::PinProperty::PWM_RUN, 0);
+    }
     return 0;
 }
