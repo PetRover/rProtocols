@@ -31,72 +31,118 @@ namespace RVR
             case PinProperty::PWM_PERIOD:
                 return this->getPinBasePath() + this->pinDirectory + "/period_ns";
             case PinProperty::PWM_RUN:
-                return this->getPinBasePath() + this->pinDirectory + "/run";;
+                return this->getPinBasePath() + this->pinDirectory + "/run";
         }
     }
 
-    int Pin::writeToFile(std::string path, std::string data)
+    void Pin::writeToFile(std::string path, std::string data)
     {
         std::ofstream writeFile;
-        writeFile.open(path);
-        writeFile << data;
+        writeFile.exceptions(std::ofstream::badbit | std::ofstream::failbit);
+        try
+        {
+            writeFile.open(path);
+            writeFile << data;
+        }
+        catch (std::ios_base::failure &failure)
+        {
+            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s", data, path,
+                   failure.what());
+            throw;
+        }
         writeFile.close();
-        return 0;
     }
 
     std::string Pin::readFromFile(std::string path)
     {
-
         std::string result;
         std::ifstream readFile;
-        readFile.open(path);
-        readFile >> result;
+        readFile.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+        try
+        {
+            readFile.open(path);
+            readFile >> result;
+        }
+        catch (std::ios_base::failure &failure)
+        {
+            printf("Failure occured while trying to read from '%s'. The failure was: %s", path, failure.what());
+            throw;
+        }
+        readFile.close();
+
         return result;
     }
 
-    int Pin::writeToProperty(PinProperty property, std::string dataString)
+    void Pin::writeToProperty(PinProperty property, std::string dataString)
     {
         std::string propertyPath = this->getPropertyFilePath(property);
         this->writeToFile(propertyPath, dataString);
-        return 0;
     }
 
-    int Pin::writeToProperty(PinProperty property, int data)
+    void Pin::writeToProperty(PinProperty property, int data)
     {
         std::string propertyPath = this->getPropertyFilePath(property);
-        std::string dataString = std::to_string(data);
-        this->writeToFile(propertyPath, dataString);
-        return 0;
+        try
+        {
+            std::string dataString = std::to_string(data);
+            this->writeToFile(propertyPath, dataString);
+        }
+        catch (std::exception &exception)
+        {
+            printf("Could not convert '%d' to string. The error was: %s", data, exception.what());
+            throw;
+        }
     }
 
-    int Pin::writeToProperty(PinProperty property, long data)
+    void Pin::writeToProperty(PinProperty property, double data)
     {
         std::string propertyPath = this->getPropertyFilePath(property);
-        std::string dataString = std::to_string(data);
-        this->writeToFile(propertyPath, dataString);
-        return 0;
-    }
-
-    int Pin::writeToProperty(PinProperty property, float data)
-    {
-        std::string propertyPath = this->getPropertyFilePath(property);
-        std::string dataString = std::to_string(data);
-        this->writeToFile(propertyPath, dataString);
-        return 0;
+        try
+        {
+            std::string dataString = std::to_string(data);
+            this->writeToFile(propertyPath, dataString);
+        }
+        catch (std::exception &exception)
+        {
+            printf("Could not convert '%f' to string. The error was: %s", data, exception.what());
+            throw;
+        }
     }
 
     int Pin::readIntFromProperty(PinProperty property)
     {
         std::string propertyPath = this->getPropertyFilePath(property);
-        int propertyValue = std::stoi(this->readFromFile(propertyPath));
-        return propertyValue;
+        std::string readString;
+        try
+        {
+            readString = this->readFromFile(propertyPath);
+            int propertyValue = std::stoi(readString);
+            return propertyValue;
+        }
+        catch (std::exception &exception)
+        {
+            printf("Failed to convert '%s' from string to int. The error was: %s", readString, exception.what());
+            throw;
+        }
     }
 
     double Pin::readDoubleFromProperty(PinProperty property)
     {
-        std::string propertyPath = this->getPropertyFilePath(property);
-        double propertyValue = std::stod(this->readFromFile(propertyPath));
-        return propertyValue;
+        {
+            std::string propertyPath = this->getPropertyFilePath(property);
+            std::string readString;
+            try
+            {
+                readString = this->readFromFile(propertyPath);
+                double propertyValue = std::stoi(readString);
+                return propertyValue;
+            }
+            catch (std::exception &exception)
+            {
+                printf("Failed to convert '%s' from string to double. The error was: %s", readString, exception.what());
+                throw;
+            }
+        }
     }
 
     std::string Pin::readStringFromProperty(PinProperty property)

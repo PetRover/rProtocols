@@ -50,7 +50,7 @@ namespace RVR
         std::string getPropertyFilePath(PinProperty property);
 
         // Writes an arbitrary string to a file given by the 'path' parameter
-        int writeToFile(std::string path, std::string data);
+        void writeToFile(std::string path, std::string data);
 
         // Returns the first line of the file given by the 'path' parameter
         std::string readFromFile(std::string path);
@@ -68,16 +68,13 @@ namespace RVR
         std::string pinDirectory;
 
         // Send a string of data to the specified property of the pin
-        int writeToProperty(PinProperty property, std::string dataString);
+        void writeToProperty(PinProperty property, std::string dataString);
 
         // Overloads writeToProperty to allowing writing ints
-        int writeToProperty(PinProperty property, int data);
+        void writeToProperty(PinProperty property, int data);
 
-        // Overloads writeToProperty to allowing writing longs
-        int writeToProperty(PinProperty property, long data);
-
-        // Overloads writeToProperty to allowing writing floats
-        int writeToProperty(PinProperty property, float data);
+        // Overloads writeToProperty to allowing writing doubles
+        void writeToProperty(PinProperty property, double data);
 
         // Reads an int value from the specified property of the pin
         int readIntFromProperty(PinProperty property);
