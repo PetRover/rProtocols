@@ -46,8 +46,8 @@ namespace RVR
         }
         catch (std::ios_base::failure &failure)
         {
-            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s", data, path,
-                   failure.what());
+            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s", data.c_str(),
+                   path.c_str(), failure.what());
             throw;
         }
         writeFile.close();
@@ -65,7 +65,7 @@ namespace RVR
         }
         catch (std::ios_base::failure &failure)
         {
-            printf("Failure occured while trying to read from '%s'. The failure was: %s", path, failure.what());
+            printf("Failure occured while trying to read from '%s'. The failure was: %s", path.c_str(), failure.what());
             throw;
         }
         readFile.close();
@@ -121,7 +121,8 @@ namespace RVR
         }
         catch (std::exception &exception)
         {
-            printf("Failed to convert '%s' from string to int. The error was: %s", readString, exception.what());
+            printf("Failed to convert '%s' from string to int. The error was: %s", readString.c_str(),
+                   exception.what());
             throw;
         }
     }
@@ -139,7 +140,8 @@ namespace RVR
             }
             catch (std::exception &exception)
             {
-                printf("Failed to convert '%s' from string to double. The error was: %s", readString, exception.what());
+                printf("Failed to convert '%s' from string to double. The error was: %s", readString.c_str(),
+                       exception.what());
                 throw;
             }
         }
