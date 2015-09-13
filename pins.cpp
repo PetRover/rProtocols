@@ -8,6 +8,8 @@
 
 namespace RVR
 {
+    const bool CONFIRM_PROPERTY_WRITES = true;
+
     const std::string GpioPin::PIN_BASE_PATH = "/sys/class/gpio/";
     const std::string AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
     const std::string PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
@@ -77,6 +79,15 @@ namespace RVR
     {
         std::string propertyPath = this->getPropertyFilePath(property);
         this->writeToFile(propertyPath, dataString);
+        if (CONFIRM_PROPERTY_WRITES){
+            std::string storedString = readStringFromProperty(property);
+            if (storedString == dataString){
+                printf("Property has been written successfully");
+            }
+            else{
+                printf("Property has not been written successfully");
+            }
+        }
     }
 
     void Pin::writeToProperty(PinProperty property, int data)
@@ -92,6 +103,15 @@ namespace RVR
             printf("Could not convert '%d' to string. The error was: %s", data, exception.what());
             throw;
         }
+        if (CONFIRM_PROPERTY_WRITES){
+            int storedInt = readIntFromProperty(property);
+            if (storedInt == data){
+                printf("Property has been written successfully");
+            }
+            else{
+                printf("Property has not been written successfully");
+            }
+        }
     }
 
     void Pin::writeToProperty(PinProperty property, double data)
@@ -106,6 +126,15 @@ namespace RVR
         {
             printf("Could not convert '%f' to string. The error was: %s", data, exception.what());
             throw;
+        }
+        if (CONFIRM_PROPERTY_WRITES){
+            double storedDouble = readDoubleFromProperty(property);
+            if (storedDouble == data){
+                printf("Property has been written successfully");
+            }
+            else{
+                printf("Property has not been written successfully");
+            }
         }
     }
 
