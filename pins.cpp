@@ -4,7 +4,11 @@
 
 #include "pins.h"
 #include <iostream>
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedImportStatement"
 #include <fstream>
+#include <stdexcept>
 
 namespace RVR
 {
@@ -428,3 +432,5 @@ namespace RVR
         return 0;
     }
 }
+
+#pragma clang diagnostic pop
