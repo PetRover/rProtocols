@@ -57,7 +57,7 @@ namespace RVR
 
     protected:
         // Integer value corresponding to the pin number which this Pin instance represents
-        int pinNumber;
+        int deviceNumber;
 
         // The base path to where this type of pins' sysfs files are located
         static const std::string PIN_BASE_PATH;
@@ -102,7 +102,7 @@ namespace RVR
         GpioPin() { }
 
         // construct a GPIO pin object and set the direction
-        GpioPin(int pinNumber, GpioDirection direction);
+        GpioPin(int deviceNumber, GpioDirection direction);
 
         // Set the value of the the GPIO
         int setValue(GpioValue value);
@@ -110,12 +110,8 @@ namespace RVR
         // Get the value of the GPIO
         GpioValue getValue();
 
-        // Set the direction of the GPIO
-        int setDirection(GpioDirection direction);
-
         // Get the direction of the GPIO
         GpioDirection getDirection();
-
 
     };
 
@@ -129,9 +125,7 @@ namespace RVR
     public:
         AdcPin() { };
 
-        AdcPin(int pinNumber);
-
-        int getAdcPort(int pinNumber);
+        AdcPin(int deviceNumber);
 
         double getValue();
     };
@@ -146,9 +140,7 @@ namespace RVR
     public:
         PwmPin() { };
 
-        PwmPin(int pinNumber);
-
-        int getPwmPort(int pinNumber);
+        PwmPin(int deviceNumber);
 
         // Returns the period in nanoseconds
         int getPeriod();

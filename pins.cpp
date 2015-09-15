@@ -5,6 +5,7 @@
 #include "pins.h"
 #include <iostream>
 #include <fstream>
+#include <string>
 
 namespace RVR
 {
@@ -23,9 +24,9 @@ namespace RVR
         switch (property)
         {
             case PinProperty::VALUE:
-                return this->getPinBasePath() + "gpio" + std::to_string(this->pinNumber) + "/value";
+                return this->getPinBasePath() + this->pinDirectory + "/value";
             case PinProperty::DIRECTION:
-                return this->getPinBasePath() + "gpio" + std::to_string(this->pinNumber) + "/direction";
+                return this->getPinBasePath() + this->pinDirectory + "/direction";
             case PinProperty::ADC_VALUE:
                 return this->getPinBasePath() + "/ocp.2/helper.14/" + this->pinDirectory;
             case PinProperty::PWM_DUTY:
@@ -187,18 +188,16 @@ namespace RVR
 // GpioPin Class Member functions
 // ==============================================================
 
-    GpioPin::GpioPin(int pinNumber, GpioDirection direction)
+    GpioPin::GpioPin(int deviceNumber, GpioDirection direction)
     {
-        this->pinNumber = pinNumber;
-        this->pinDirectory = "gpio" + std::to_string(this->pinNumber);
+        this->deviceNumber = deviceNumber;
+        this->pinDirectory = "gpio" + std::to_string(this->deviceNumber);
 
         // Always initialize output pins with a low value
         if (direction == GpioDirection::OUT)
         {
             this->setValue(GpioValue::LOW);
         }
-
-        this->setDirection(direction);
 
     }
 
@@ -245,23 +244,6 @@ namespace RVR
         return value; // TODO handle bad data read error
     }
 
-    int GpioPin::setDirection(GpioDirection direction)
-    {
-        switch (direction)
-        {
-            case GpioDirection::IN:
-                this->writeToProperty(PinProperty::DIRECTION, "in");
-                break;
-            case GpioDirection::OUT:
-                this->writeToProperty(PinProperty::DIRECTION, "out");
-                break;
-            default:
-                return -1;
-        }
-        return 0;
-    }
-
-
     GpioDirection GpioPin::getDirection()
     {
         GpioDirection direction;
@@ -287,10 +269,10 @@ namespace RVR
 // AdcPin Class Member functions
 // ==============================================================
 
-    AdcPin::AdcPin(int pinNumber)
+    AdcPin::AdcPin(int deviceNumber)
     {
-        this->pinNumber = pinNumber;
-        this->pinDirectory = "AIN" + std::to_string(getAdcPort(this->pinNumber));
+        this->deviceNumber = deviceNumber;
+        this->pinDirectory = "AIN" + std::to_string(deviceNumber);
     }
 
     std::string AdcPin::getPinBasePath()
@@ -304,81 +286,19 @@ namespace RVR
         return value;
     }
 
-//returns the AIN port number associated with the pin which is needed to read from pin
-    int AdcPin::getAdcPort(int pinNumber)
-    {
-        switch (pinNumber)
-        {
-            case 85: // pin 9_39
-                return 0;
-            case 86: // pin 9_40
-                return 1;
-            case 83: // pin 9_37
-                return 2;
-            case 84: // pin 9_38
-                return 3;
-            case 79: // pin 9_33
-                return 4;
-            case 82: // pin 9_36
-                return 5;
-            case 81: // pin 9_35
-                return 6;
-            default:
-                return -1;
-        }
-    }
-
 // ==============================================================
 // PwmPin Class Member functions
 // ==============================================================
 
-    PwmPin::PwmPin(int pinNumber)
+    PwmPin::PwmPin(int deviceNumber)
     {
-        this->pinNumber = pinNumber;
-        this->pinDirectory = "pwm" + std::to_string(getPwmPort(this->pinNumber));
+        this->deviceNumber = deviceNumber;
+        this->pinDirectory = "pwm" + std::to_string(this->deviceNumber);
     }
 
     std::string PwmPin::getPinBasePath()
     {
         return PwmPin::PIN_BASE_PATH;
-    }
-
-//returns the PWM port number associated with the pin which is needed to export the pin
-    int PwmPin::getPwmPort(int pinNumber)
-    {
-        switch (pinNumber)
-        {
-            case 68: // pin 9_22
-                return 0;
-            case 77: // pin 9_31
-                return 0;
-            case 67: // pin 9_21
-                return 1;
-            case 75: // pin 9_29
-                return 1;
-            case 88: // pin 9_42
-                return 2;
-            case 60: // pin 9_14
-                return 3;
-            case 36: // pin 8_36
-                return 3;
-            case 62: // pin 9_16
-                return 4;
-            case 34: // pin_8_34
-                return 4;
-            case 19: // pin 8_19
-                return 5;
-            case 45: // pin 8_45
-                return 5;
-            case 13: // pin 8_13
-                return 6;
-            case 46: // pin 8_46
-                return 6;
-            case 74: // pin 9_28
-                return 7;
-            default:
-                return -1; // TODO Implement error handing for this
-        }
     }
 
     int PwmPin::getPeriod()
