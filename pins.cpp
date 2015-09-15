@@ -8,11 +8,8 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedImportStatement"
 #include <fstream>
-<<<<<<< HEAD
 #include <string>
-=======
 #include <stdexcept>
->>>>>>> 76b626b09da137ca2e277f3e5c49fc2c2115ce9a
 
 namespace RVR
 {
