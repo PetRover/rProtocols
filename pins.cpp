@@ -11,10 +11,10 @@
 #include <string>
 #include <stdexcept>
 
+#define CONFIRM_SYSFS_WRITES
+
 namespace RVR
 {
-    const bool CONFIRM_PROPERTY_WRITES = true;
-
     const std::string GpioPin::PIN_BASE_PATH = "/sys/class/gpio/";
     const std::string AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
     const std::string PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
@@ -50,11 +50,17 @@ namespace RVR
         {
             writeFile.open(path);
             writeFile << data;
+#ifdef CONFIRM_SYSFS_WRITES
+            std::string storedString = readFromFile(path);
+            if (storedString != data)
+            {
+                printf("[ERROR] Failed to write '%s' to the file '%s'\n", data.c_str(), path.c_str());
+            }
+#endif
         }
         catch (std::ios_base::failure &failure)
         {
-            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s\n", data.c_str(),
-                   path.c_str(), failure.what());
+            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s\n", data.c_str(), path.c_str(), failure.what());
             throw;
         }
 
@@ -85,15 +91,6 @@ namespace RVR
     {
         std::string propertyPath = this->getPropertyFilePath(property);
         this->writeToFile(propertyPath, dataString);
-        if (CONFIRM_PROPERTY_WRITES){
-            std::string storedString = readStringFromProperty(property);
-            if (storedString == dataString){
-                printf("Property has been written successfully");
-            }
-            else{
-                printf("Property has not been written successfully");
-            }
-        }
     }
 
     void Pin::writeToProperty(PinProperty property, int data)
@@ -109,15 +106,6 @@ namespace RVR
             printf("Could not convert '%d' to string. The error was: %s\n", data, exception.what());
             throw;
         }
-        if (CONFIRM_PROPERTY_WRITES){
-            int storedInt = readIntFromProperty(property);
-            if (storedInt == data){
-                printf("Property has been written successfully");
-            }
-            else{
-                printf("Property has not been written successfully");
-            }
-        }
     }
 
     void Pin::writeToProperty(PinProperty property, double data)
@@ -132,15 +120,6 @@ namespace RVR
         {
             printf("Could not convert '%f' to string. The error was: %s\n", data, exception.what());
             throw;
-        }
-        if (CONFIRM_PROPERTY_WRITES){
-            double storedDouble = readDoubleFromProperty(property);
-            if (storedDouble == data){
-                printf("Property has been written successfully");
-            }
-            else{
-                printf("Property has not been written successfully");
-            }
         }
     }
 
@@ -175,8 +154,7 @@ namespace RVR
             }
             catch (std::exception &exception)
             {
-                printf("Failed to convert '%s' from string to double. The error was: %s\n", readString.c_str(),
-                       exception.what());
+                printf("Failed to convert '%s' from string to double. The error was: %s\n", readString.c_str(), exception.what());
                 throw;
             }
         }
@@ -193,13 +171,13 @@ namespace RVR
 // GpioPin Class Member functions
 // ==============================================================
 
-    GpioPin::GpioPin(int deviceNumber, GpioDirection direction)
+    GpioPin::GpioPin(int deviceNumber)
     {
         this->deviceNumber = deviceNumber;
         this->pinDirectory = "gpio" + std::to_string(this->deviceNumber);
 
         // Always initialize output pins with a low value
-        if (direction == GpioDirection::OUT)
+        if (this->getDirection() == GpioDirection::OUT)
         {
             this->setValue(GpioValue::LOW);
         }
@@ -333,7 +311,7 @@ namespace RVR
     int PwmPin::setDutyCyclePercent(double dutyCyclePercent)
     {
         int period_ns = this->getPeriod();
-        int dutyCycleTime_ns = (int) ((period_ns * 100) / dutyCyclePercent);
+        int dutyCycleTime_ns = (int) ((period_ns * dutyCyclePercent) / 100);
         this->setDutyCycleTime(dutyCycleTime_ns);
         return 0;
     }

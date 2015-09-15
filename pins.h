@@ -102,7 +102,7 @@ namespace RVR
         GpioPin() { }
 
         // construct a GPIO pin object and set the direction
-        GpioPin(int deviceNumber, GpioDirection direction);
+        GpioPin(int deviceNumber);
 
         // Set the value of the the GPIO
         int setValue(GpioValue value);
