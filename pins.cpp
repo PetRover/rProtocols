@@ -4,8 +4,15 @@
 
 #include "pins.h"
 #include <iostream>
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedImportStatement"
 #include <fstream>
+<<<<<<< HEAD
 #include <string>
+=======
+#include <stdexcept>
+>>>>>>> 76b626b09da137ca2e277f3e5c49fc2c2115ce9a
 
 namespace RVR
 {
@@ -49,11 +56,11 @@ namespace RVR
         }
         catch (std::ios_base::failure &failure)
         {
-            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s", data.c_str(),
+            printf("Failure occured while trying to write '%s' to '%s'. The failure was: %s\n", data.c_str(),
                    path.c_str(), failure.what());
             throw;
         }
-        writeFile.close();
+
     }
 
     std::string Pin::readFromFile(std::string path)
@@ -68,7 +75,8 @@ namespace RVR
         }
         catch (std::ios_base::failure &failure)
         {
-            printf("Failure occured while trying to read from '%s'. The failure was: %s", path.c_str(), failure.what());
+            printf("Failure occured while trying to read from '%s'. The failure was: %s\n", path.c_str(),
+                   failure.what());
             throw;
         }
         readFile.close();
@@ -101,7 +109,7 @@ namespace RVR
         }
         catch (std::exception &exception)
         {
-            printf("Could not convert '%d' to string. The error was: %s", data, exception.what());
+            printf("Could not convert '%d' to string. The error was: %s\n", data, exception.what());
             throw;
         }
         if (CONFIRM_PROPERTY_WRITES){
@@ -125,7 +133,7 @@ namespace RVR
         }
         catch (std::exception &exception)
         {
-            printf("Could not convert '%f' to string. The error was: %s", data, exception.what());
+            printf("Could not convert '%f' to string. The error was: %s\n", data, exception.what());
             throw;
         }
         if (CONFIRM_PROPERTY_WRITES){
@@ -151,7 +159,7 @@ namespace RVR
         }
         catch (std::exception &exception)
         {
-            printf("Failed to convert '%s' from string to int. The error was: %s", readString.c_str(),
+            printf("Failed to convert '%s' from string to int. The error was: %s\n", readString.c_str(),
                    exception.what());
             throw;
         }
@@ -170,7 +178,7 @@ namespace RVR
             }
             catch (std::exception &exception)
             {
-                printf("Failed to convert '%s' from string to double. The error was: %s", readString.c_str(),
+                printf("Failed to convert '%s' from string to double. The error was: %s\n", readString.c_str(),
                        exception.what());
                 throw;
             }
@@ -346,3 +354,5 @@ namespace RVR
         return 0;
     }
 }
+
+#pragma clang diagnostic pop
