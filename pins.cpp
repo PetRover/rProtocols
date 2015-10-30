@@ -12,6 +12,16 @@ namespace RVR
     const std::string PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
 
 // ==============================================================
+// RegisteredPin Struct Methods
+// ==============================================================
+
+    bool RegisteredPin::contains(Pin *pin)
+    {
+        std::unordered_set<Pin *>::iterator findPin = this->pins.find(pin);
+        return findPin != this->pins.end();
+    }
+
+// ==============================================================
 // PinRegistry Class Member functions
 // ==============================================================
 
@@ -19,20 +29,35 @@ namespace RVR
     {
         RegisteredPinKey key = RegisteredPinKey();
         key.type = pin->getType();
-        key.deviceNumber = pin->getDeviceNumber()
+        key.deviceNumber = pin->getDeviceNumber();
         return key;
+    }
+
+    RegisteredPin *PinRegistry::getRegisteredPin(RegisteredPinKey key)
+    {
+        RegisteredPin *registeredPin = this->registeredPins.find(&key);
+
+        // find the registration for this key
+        if (registeredPin == this->registeredPins.end())
+        {
+            LOG(ERROR) << "Cannot find pin in registry! KEY=(type=" << key.type << ",deviceNumber=" <<
+            key.deviceNumber << ")";
+            std::runtime_error("Pin is not registered");
+        }
+        return registeredPin;
     }
 
     void PinRegistry::registerPin(Pin *pin)
     {
         RegisteredPinKey key = PinRegistry::pinToKey(pin);
-        RegisteredPin* registeredPin = this->registeredPins.find(key);
+        RegisteredPin* registeredPin= this->getRegisteredPin(key);
+
 
         // find the registration for this key
         if (registeredPin != this->registeredPins.end())
         {
             // Does the registration contain this pin
-            std::unordered_set<Pin*>::iterator findPin = registeredPin->pins.find(pin);
+            std::unordered_set<Pin *>::iterator findPin = registeredPin->pins.find(pin);
             if (findPin != registeredPin->pins.end())
             {
                 // If yes, then the pins is already registered
@@ -42,13 +67,15 @@ namespace RVR
             {
                 // If not, then add this pin to the current registration
                 registeredPin->pins.insert(pin);
-                VLOG(2) << "Registered pin (type="<<key.type<<",deviceNumber="<<key.deviceNumber<<") address: " << pin;
+                VLOG(2) << "Registered pin (type=" << key.type << ",deviceNumber=" << key.deviceNumber <<
+                        ") address: " << pin;
             }
         }
-        // If not, create a new registration entry
+            // If not, create a new registration entry
         else
         {
-            VLOG(2) << "Creating new registration for pin (type="<<key.type<<",deviceNumber="<<key.deviceNumber<<") address: " << pin;
+            VLOG(2) << "Creating new registration for pin (type=" << key.type << ",deviceNumber=" << key.deviceNumber <<
+                    ") address: " << pin;
             registeredPin = new RegisteredPin();
             registeredPin->type = pin->getType();
             registeredPin->deviceNumber = pin->getDeviceNumber();
@@ -57,129 +84,147 @@ namespace RVR
             std::pair<RegisteredPinKey, RegisteredPin> newRegistration = {key, registeredPin};
             this->registeredPins.insert(newRegistration);
         }
-
-
-        bool exists = false;
-        // Go though the existing registered pins
-        for (int i = 0; i < this->registeredPins.size(); i++)
-        {
-            // Check if a currently registered pin already has the same type and deviceNumber as the pin being registered
-            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
-            {
-                // is the pin that we are trying to register already registered?
-                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
-                    this->registeredPins[i].pins.end())
-                {
-                    // if so, DON"T DO THAT
-                    std::runtime_error("This pin has already been registered");
-                }
-                    // if not, add
-                else
-                {
-                    this->registeredPins[i].pins.insert(1, pin);
-                    exists = true;
-                }
-            }
-        }
-        // if this type:deviceNumber has not been registered before, created a new registeredPin struct and add it
-        if (!exists)
-        {
-            RegisteredPin registeredPin;
-            registeredPin.deviceNumber = pin->getDeviceNumber();
-            registeredPin.type = pin->getType();
-            registeredPin.pins = std::vector<Pin *>(1);
-            registeredPin.pins.assign(1, pin);
-            registeredPin.pinWithLock = NULL;
-
-            this->registeredPins.insert(1, registeredPin);
-        }
     }
 
 
     void PinRegistry::unregisterPin(Pin *pin)
     {
-        // Go though the existing registered pins
-        for (int i = 0; i < this->registeredPins.size(); i++)
+        RegisteredPinKey key = PinRegistry::pinToKey(pin);
+        RegisteredPin *registeredPin = this->getRegisteredPin(key);
+
+        // Does the registration contain this pin
+
+        if (registeredPin->contains(pin))
         {
-            // Check if a currently registered pin already has the same type and deviceNumber as the pin being unregistered
-            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
+            // Is this the only pin in this registry entry?
+            if (registeredPin->pins.size() == 1)
             {
-                // is the pin that we are trying to unregister already registered?
-                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
-                    this->registeredPins[i].pins.end())
+                // If yes, remove the entry
+                this->registeredPins.erase(key);
+                VLOG(2) << "Removed registration for pin (type=" << key.type << ",deviceNumber=" <<
+                        key.deviceNumber << ") address: " << pin;
+            }
+            else
+            {
+                // Otherwise, just remove the pin
+                registeredPin->pins.erase(pin);
+                VLOG(2) << "Removed pin from registeration (type=" << key.type << ",deviceNumber=" <<
+                        key.deviceNumber << ") address: " << pin;
+
+                // If this pin had the lock, then set the lock to null
+                if (registeredPin->pinWithLock == pin)
                 {
-                    if (this->registeredPins[i].pins.size() > 1)
-                    {
-                        // Determine if the pin we are removing was the one with the lock
-                        if (this->registeredPins[i].pinWithLock == pin)
-                        {
-                            this->registeredPins[i].pinWithLock = NULL;
-                        }
-                        this->registeredPins[i].pins.erase(std::remove(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin), this->registeredPins[i].pins.end());
-                    }
-                    else
-                    {
-                        this->registeredPins.erase(this->registeredPins.begin() + i);
-                        break;
-                    }
-                }
-                    // if not, why are we trying to unregister it?
-                else
-                {
-                    std::runtime_error("This pin has not been registered");
+                    registeredPin->pinWithLock = NULL;
+                    VLOG(2) << "Set the lock pointer to NULL";
                 }
             }
+        }
+        else
+        {
+            // If not, then error because we cannot unregister a pin that has not ben registered
+            LOG(ERROR) << "Cannot unregister pin becuase it has not been registered! (type=" << key.type << ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+            std::runtime_error("Pin is not registered! Cannot unregister");
         }
     }
 
 
     int PinRegistry::getLock(Pin *pin)
     {
-        for (int i = 0; i < this->registeredPins.size(); i++)
+        RegisteredPinKey key = PinRegistry::pinToKey(pin);
+        RegisteredPin *registeredPin = this->getRegisteredPin(key);
+
+        // Does the registration contain this pin
+        if (registeredPin->contains(pin))
         {
-            // Check if a currently registered pin already has the same type and deviceNumber as the pin being unregistered
-            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
+            if (registeredPin->pinWithLock == NULL)
             {
-                // is the pin that we are trying to get the lock for registered?
-                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
-                    this->registeredPins[i].pins.end())
-                {
-                    if (this->registeredPins[i].pinWithLock == NULL)
-                    {
-                        this->registeredPins[i].pinWithLock;
-                        VLOG(2) << "Lock obtained";
-                        return 0;
-                    }
-                    else if (this->registeredPins[i].pinWithLock == pin)
-                    {
-                        VLOG(2) << "Lock obtained, but the requesting pin already had the lock";
-                        return 0;
-                    }
-                    else
-                    {
-                        LOG(WARNING) << "Cannot get lock because the pin is currently locked";
-                        return 1;
-                    }
-                }
-                // if not, we cant get a lock for it?
-                else
-                {
-                    std::runtime_error("Failed to get a lock, the pin is not registered");
-                }
+                registeredPin->pinWithLock = pin;
+                LOG(WARNING) << "Got lock for pin. (type=" << key.type <<
+                ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+                return 0;
+            }
+            else if (registeredPin->pinWithLock == pin)
+            {
+                LOG(WARNING) << "Pin already had lock, it should not be asking again! (type=" << key.type <<
+                ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+                return 0;
+            }
+            else
+            {
+                LOG(WARNING) << "Could not get lock for pin. Another pin already has the lock! (type=" <<
+                key.type << ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+                return 1;
             }
         }
-        LOG(ERROR) << "Could not get lock for pin... could not even find the pin in the registery";
-        return 2;
+        else
+        {
+            // If not, then error because we cannot lock a pin that has not ben registered
+            LOG(ERROR) << "Cannot lock pin because it is not registered (type=" << key.type << ",deviceNumber=" <<
+            key.deviceNumber << ") address: " << pin;
+            std::runtime_error("Pin is not registered! Cannot get lock");
+        }
+        return 1;
     }
 
     int PinRegistry::releaseLock(Pin *pin)
     {
-        return 0;
+        RegisteredPinKey key = PinRegistry::pinToKey(pin);
+        RegisteredPin* registeredPin = this->getRegisteredPin(key);
+
+
+        if (registeredPin->contains(pin))
+        {
+            // If yes, and the lock is not null, git the pin the lock
+            if (registeredPin->pinWithLock == pin)
+            {
+                registeredPin->pinWithLock = NULL;
+                return 0;
+            }
+            else if (registeredPin->pinWithLock == NULL)
+            {
+                LOG(WARNING) << "Pin is already unlocked, it should not be asking again! (type=" << key.type <<
+                ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+                return 0;
+            }
+            else
+            {
+                LOG(WARNING) << "The pin does not have the lock and therefore cannot release it! (type=" << key.type <<
+                ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+                return 1;
+            }
+
+        }
+        else
+        {
+            // If not, then error because we cannot lock a pin that has not ben registered
+            LOG(ERROR) << "Cannot release lock on pin because it is not registered (type=" << key.type <<
+            ",deviceNumber=" << key.deviceNumber << ") address: " << pin;
+            std::runtime_error("Pin is not registered! Cannot release lock");
+        }
+        return 1;
     }
 
 
-    bool PinRegistry::isPinLocked(Pin *pin)
+    bool PinRegistry::doesPinHaveLock(Pin *pin)
     {
+        RegisteredPinKey key = PinRegistry::pinToKey(pin);
+        RegisteredPin* registeredPin = this->getRegisteredPin(key);
+
+        if (registeredPin->contains(pin))
+        {
+            if (registeredPin->pinWithLock == pin)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            // If not, then error because we cannot lock a pin that has not ben registered
+            LOG(ERROR) << "Cannot release lock on pin because it is not registered (type=" << key.type <<
+            ",deviceNumber=" <<
+            key.deviceNumber << ") address: " << pin;
+            std::runtime_error("Pin is not registered! Cannot release lock");
+        }
         return false;
     }
 

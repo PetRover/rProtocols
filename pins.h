@@ -66,20 +66,22 @@ namespace RVR
         int deviceNumber;
         std::unordered_set<Pin*> pins = std::unordered_set<Pin*>();
         Pin* pinWithLock;
+        bool contains(Pin* pin);
     };
 
     // Class to manage pins registered to objects
     class PinRegistry
     {
     private:
-        static RegisteredPinKey pinToKey(Pin* pin);
+        static RegisteredPinKey pinToKey(Pin *pin);
         std::unordered_map<RegisteredPinKey, RegisteredPin*> registeredPins = std::unordered_map<RegisteredPinKey, RegisteredPin*>();
+        RegisteredPin * getRegisteredPin(RegisteredPinKey key);
     public:
         void registerPin(Pin *pin);
         void unregisterPin(Pin *pin);
         int getLock(Pin* pin);
         int releaseLock(Pin* pin);
-        bool isPinLocked(Pin* pin);
+        bool doesPinHaveLock(Pin *pin);
 
     };
 
