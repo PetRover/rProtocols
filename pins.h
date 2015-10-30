@@ -16,6 +16,12 @@
 #include <algorithm>
 #include "../rCore/easylogging++.h"
 
+template <class T>
+inline void hash_combine(std::size_t & s, const T & v)
+{
+    std::hash<T> h;
+    s^= h(v) + 0x9e3779b9 + (s<< 6) + (s>> 2);
+}
 
 namespace RVR
 {
@@ -54,40 +60,6 @@ namespace RVR
         PWM_RUN
     };
 
-    struct RegisteredPinKey
-    {
-        PinType type;
-        int deviceNumber;
-    };
-
-    struct RegisteredPin
-    {
-        PinType type;
-        int deviceNumber;
-        std::unordered_set<Pin*> pins = std::unordered_set<Pin*>();
-        Pin* pinWithLock;
-        bool contains(Pin* pin);
-    };
-
-    // Class to manage pins registered to objects
-    class PinRegistry
-    {
-    private:
-        static RegisteredPinKey pinToKey(Pin *pin);
-        std::unordered_map<RegisteredPinKey, RegisteredPin*> registeredPins = std::unordered_map<RegisteredPinKey, RegisteredPin*>();
-        RegisteredPin * getRegisteredPin(RegisteredPinKey key);
-    public:
-        void registerPin(Pin *pin);
-        void unregisterPin(Pin *pin);
-        int getLock(Pin* pin);
-        int releaseLock(Pin* pin);
-        bool doesPinHaveLock(Pin *pin);
-
-    };
-
-    PinRegistry PIN_REGISTRY = PinRegistry();
-
-
     // Base class for pin objects
     class Pin
         // A pin object represents a physical pin the on the microprocessor.
@@ -105,7 +77,7 @@ namespace RVR
         std::string readFromFile(std::string path);
 
         // Represents the type of the pin. Must be set by the subclass
-        virtual PinType type;
+        PinType type;
 
     protected:
         // Integer value corresponding to the pin number which this Pin instance represents
@@ -221,5 +193,66 @@ namespace RVR
 
         int setEnable(bool enable);
     };
+
+
+
+    struct RegisteredPinKey
+    {
+        PinType type;
+        int deviceNumber;
+    };
+
+    struct std::hash<RVR::RegisteredPinKey>
+    {
+        std::size_t operator()(const RVR::RegisteredPinKey& k) const
+        {
+            const int a = (int)k.type;
+            const int b = k.deviceNumber;
+            return std::hash<int>()( a*b + (a+b) ) ;
+        }
+    };
+
+    struct RegisteredPin
+    {
+        PinType type;
+        int deviceNumber;
+        std::unordered_set<Pin*> pins = std::unordered_set<Pin*>();
+        Pin* pinWithLock;
+        bool contains(Pin* pin);
+    };
+
+    // Class to manage pins registered to objects
+    class PinRegistry
+    {
+    private:
+        static RegisteredPinKey pinToKey(Pin *pin);
+        std::unordered_map<RegisteredPinKey, RegisteredPin*> registeredPins;// = std::unordered_map<RegisteredPinKey, RegisteredPin*>();
+        RegisteredPin * getRegisteredPin(RegisteredPinKey key);
+    public:
+        void registerPin(Pin *pin);
+        void unregisterPin(Pin *pin);
+        int getLock(Pin* pin);
+        int releaseLock(Pin* pin);
+        bool doesPinHaveLock(Pin *pin);
+
+    };
+
+    PinRegistry PIN_REGISTRY = PinRegistry();
+
+
 };
+namespace std
+{
+    template<>
+    struct MyHash<RVR::RegisteredPinKey>
+    {
+        std::size_t operator()(RVR::RegisteredPinKey const& key) const
+        {
+            std::size_t res = 0;
+            hash_combine(res,key.type);
+            hash_combine(res,key.deviceNumber);
+            return res;
+        }
+    };
+}
 #endif //RCORE_GPIO_H
