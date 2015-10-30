@@ -11,7 +11,7 @@
 #include <string>
 #include <stdexcept>
 
-#define CONFIRM_SYSFS_WRITES
+//#define CONFIRM_SYSFS_WRITES
 
 namespace RVR
 {
@@ -54,7 +54,7 @@ namespace RVR
             std::string storedString = readFromFile(path);
             if (storedString != data)
             {
-                printf("[ERROR] Failed to write '%s' to the file '%s'\n", data.c_str(), path.c_str());
+                printf("[ERROR] Failed to write '%s' to the file '%s'... instad value is '%s'\n", data.c_str(), path.c_str(), storedString.c_str());
             }
 #endif
         }
