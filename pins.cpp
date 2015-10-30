@@ -3,14 +3,6 @@
 //
 
 #include "pins.h"
-#include <iostream>
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnusedImportStatement"
-#include <fstream>
-#include <string>
-#include <stdexcept>
-
 //#define CONFIRM_SYSFS_WRITES
 
 namespace RVR
@@ -20,8 +12,201 @@ namespace RVR
     const std::string PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
 
 // ==============================================================
+// PinRegistry Class Member functions
+// ==============================================================
+
+    RegisteredPinKey PinRegistry::pinToKey(Pin *pin)
+    {
+        RegisteredPinKey key = RegisteredPinKey();
+        key.type = pin->getType();
+        key.deviceNumber = pin->getDeviceNumber()
+        return key;
+    }
+
+    void PinRegistry::registerPin(Pin *pin)
+    {
+        RegisteredPinKey key = PinRegistry::pinToKey(pin);
+        RegisteredPin* registeredPin = this->registeredPins.find(key);
+
+        // find the registration for this key
+        if (registeredPin != this->registeredPins.end())
+        {
+            // Does the registration contain this pin
+            std::unordered_set<Pin*>::iterator findPin = registeredPin->pins.find(pin);
+            if (findPin != registeredPin->pins.end())
+            {
+                // If yes, then the pins is already registered
+                std::runtime_error("This pin has already been registered");
+            }
+            else
+            {
+                // If not, then add this pin to the current registration
+                registeredPin->pins.insert(pin);
+                VLOG(2) << "Registered pin (type="<<key.type<<",deviceNumber="<<key.deviceNumber<<") address: " << pin;
+            }
+        }
+        // If not, create a new registration entry
+        else
+        {
+            VLOG(2) << "Creating new registration for pin (type="<<key.type<<",deviceNumber="<<key.deviceNumber<<") address: " << pin;
+            registeredPin = new RegisteredPin();
+            registeredPin->type = pin->getType();
+            registeredPin->deviceNumber = pin->getDeviceNumber();
+            registeredPin->pins.insert(pin);
+            registeredPin->pinWithLock = NULL;
+            std::pair<RegisteredPinKey, RegisteredPin> newRegistration = {key, registeredPin};
+            this->registeredPins.insert(newRegistration);
+        }
+
+
+        bool exists = false;
+        // Go though the existing registered pins
+        for (int i = 0; i < this->registeredPins.size(); i++)
+        {
+            // Check if a currently registered pin already has the same type and deviceNumber as the pin being registered
+            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
+            {
+                // is the pin that we are trying to register already registered?
+                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
+                    this->registeredPins[i].pins.end())
+                {
+                    // if so, DON"T DO THAT
+                    std::runtime_error("This pin has already been registered");
+                }
+                    // if not, add
+                else
+                {
+                    this->registeredPins[i].pins.insert(1, pin);
+                    exists = true;
+                }
+            }
+        }
+        // if this type:deviceNumber has not been registered before, created a new registeredPin struct and add it
+        if (!exists)
+        {
+            RegisteredPin registeredPin;
+            registeredPin.deviceNumber = pin->getDeviceNumber();
+            registeredPin.type = pin->getType();
+            registeredPin.pins = std::vector<Pin *>(1);
+            registeredPin.pins.assign(1, pin);
+            registeredPin.pinWithLock = NULL;
+
+            this->registeredPins.insert(1, registeredPin);
+        }
+    }
+
+
+    void PinRegistry::unregisterPin(Pin *pin)
+    {
+        // Go though the existing registered pins
+        for (int i = 0; i < this->registeredPins.size(); i++)
+        {
+            // Check if a currently registered pin already has the same type and deviceNumber as the pin being unregistered
+            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
+            {
+                // is the pin that we are trying to unregister already registered?
+                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
+                    this->registeredPins[i].pins.end())
+                {
+                    if (this->registeredPins[i].pins.size() > 1)
+                    {
+                        // Determine if the pin we are removing was the one with the lock
+                        if (this->registeredPins[i].pinWithLock == pin)
+                        {
+                            this->registeredPins[i].pinWithLock = NULL;
+                        }
+                        this->registeredPins[i].pins.erase(std::remove(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin), this->registeredPins[i].pins.end());
+                    }
+                    else
+                    {
+                        this->registeredPins.erase(this->registeredPins.begin() + i);
+                        break;
+                    }
+                }
+                    // if not, why are we trying to unregister it?
+                else
+                {
+                    std::runtime_error("This pin has not been registered");
+                }
+            }
+        }
+    }
+
+
+    int PinRegistry::getLock(Pin *pin)
+    {
+        for (int i = 0; i < this->registeredPins.size(); i++)
+        {
+            // Check if a currently registered pin already has the same type and deviceNumber as the pin being unregistered
+            if ((registeredPins[i].deviceNumber == pin->getDeviceNumber() & (registeredPins[i].type == pin->getType())))
+            {
+                // is the pin that we are trying to get the lock for registered?
+                if (std::find(this->registeredPins[i].pins.begin(), this->registeredPins[i].pins.end(), pin) !=
+                    this->registeredPins[i].pins.end())
+                {
+                    if (this->registeredPins[i].pinWithLock == NULL)
+                    {
+                        this->registeredPins[i].pinWithLock;
+                        VLOG(2) << "Lock obtained";
+                        return 0;
+                    }
+                    else if (this->registeredPins[i].pinWithLock == pin)
+                    {
+                        VLOG(2) << "Lock obtained, but the requesting pin already had the lock";
+                        return 0;
+                    }
+                    else
+                    {
+                        LOG(WARNING) << "Cannot get lock because the pin is currently locked";
+                        return 1;
+                    }
+                }
+                // if not, we cant get a lock for it?
+                else
+                {
+                    std::runtime_error("Failed to get a lock, the pin is not registered");
+                }
+            }
+        }
+        LOG(ERROR) << "Could not get lock for pin... could not even find the pin in the registery";
+        return 2;
+    }
+
+    int PinRegistry::releaseLock(Pin *pin)
+    {
+        return 0;
+    }
+
+
+    bool PinRegistry::isPinLocked(Pin *pin)
+    {
+        return false;
+    }
+
+// ==============================================================
 // Pin Class Member functions
 // ==============================================================
+    Pin::Pin(int deviceNumber, PinType type)
+    {
+        this->deviceNumber = deviceNumber;
+        this->type = type;
+        PIN_REGISTRY.registerPin(this);
+    }
+
+    Pin::~Pin()
+    {
+        PIN_REGISTRY.unregisterPin(this);
+    }
+
+    PinType Pin::getType()
+    {
+        return this->type;
+    }
+
+    int Pin::getDeviceNumber()
+    {
+        return this->deviceNumber;
+    }
 
     std::string Pin::getPropertyFilePath(PinProperty property)
     {
@@ -54,7 +239,7 @@ namespace RVR
             std::string storedString = readFromFile(path);
             if (storedString != data)
             {
-                printf("[ERROR] Failed to write '%s' to the file '%s'... instad value is '%s'\n", data.c_str(), path.c_str(), storedString.c_str());
+                printf("[ERROR] Failed to write '%s' to the file '%s'... instead value is '%s'\n", data.c_str(), path.c_str(), storedString.c_str());
             }
 #endif
         }
@@ -172,8 +357,8 @@ namespace RVR
 // ==============================================================
 
     GpioPin::GpioPin(int deviceNumber)
+    : Pin(deviceNumber, PinType::GPIO)
     {
-        this->deviceNumber = deviceNumber;
         this->pinDirectory = "gpio" + std::to_string(this->deviceNumber);
 
         // Always initialize output pins with a low value
@@ -253,8 +438,8 @@ namespace RVR
 // ==============================================================
 
     AdcPin::AdcPin(int deviceNumber)
+    : Pin(deviceNumber, PinType::ADC)
     {
-        this->deviceNumber = deviceNumber;
         this->pinDirectory = "AIN" + std::to_string(deviceNumber);
     }
 
@@ -274,8 +459,8 @@ namespace RVR
 // ==============================================================
 
     PwmPin::PwmPin(int deviceNumber)
+    : Pin(deviceNumber, PinType::PWM)
     {
-        this->deviceNumber = deviceNumber;
         this->pinDirectory = "pwm" + std::to_string(this->deviceNumber);
     }
 
@@ -329,5 +514,3 @@ namespace RVR
         return 0;
     }
 }
-
-#pragma clang diagnostic pop

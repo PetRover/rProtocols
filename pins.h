@@ -7,10 +7,26 @@
 
 #include <iosfwd>
 #include <string>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <algorithm>
+#include "../rCore/easylogging++.h"
 
 
 namespace RVR
 {
+    // Representations of the different types of pin objects
+    enum class PinType
+    {
+        GPIO,
+        PWM,
+        ADC
+    };
+
     // Options for the direction of a GPIO pin
     enum class GpioDirection
     {
@@ -38,6 +54,37 @@ namespace RVR
         PWM_RUN
     };
 
+    struct RegisteredPinKey
+    {
+        PinType type;
+        int deviceNumber;
+    };
+
+    struct RegisteredPin
+    {
+        PinType type;
+        int deviceNumber;
+        std::unordered_set<Pin*> pins = std::unordered_set<Pin*>();
+        Pin* pinWithLock;
+    };
+
+    // Class to manage pins registered to objects
+    class PinRegistry
+    {
+    private:
+        static RegisteredPinKey pinToKey(Pin* pin);
+        std::unordered_map<RegisteredPinKey, RegisteredPin*> registeredPins = std::unordered_map<RegisteredPinKey, RegisteredPin*>();
+    public:
+        void registerPin(Pin *pin);
+        void unregisterPin(Pin *pin);
+        int getLock(Pin* pin);
+        int releaseLock(Pin* pin);
+        bool isPinLocked(Pin* pin);
+
+    };
+
+    PinRegistry PIN_REGISTRY = PinRegistry();
+
 
     // Base class for pin objects
     class Pin
@@ -54,6 +101,9 @@ namespace RVR
 
         // Returns the first line of the file given by the 'path' parameter
         std::string readFromFile(std::string path);
+
+        // Represents the type of the pin. Must be set by the subclass
+        virtual PinType type;
 
     protected:
         // Integer value corresponding to the pin number which this Pin instance represents
@@ -86,6 +136,12 @@ namespace RVR
         std::string readStringFromProperty(PinProperty property);
 
     public:
+        Pin() {};
+        Pin(int deviceNumber, PinType type);
+        ~Pin();
+
+        PinType getType();
+        int getDeviceNumber();
     };
 
     // Subclass of Pin used to represent pins that are configured as GPIOs
@@ -96,6 +152,8 @@ namespace RVR
         static const std::string PIN_BASE_PATH;
 
         std::string getPinBasePath(); // https://github.com/PetRover/rProtocols/issues/5
+
+        PinType type = PinType::GPIO;
     public:
 
 
@@ -122,6 +180,8 @@ namespace RVR
         static const std::string PIN_BASE_PATH;
 
         std::string getPinBasePath(); // https://github.com/PetRover/rProtocols/issues/5
+
+        PinType type = PinType::ADC;
     public:
         AdcPin() { };
 
@@ -137,6 +197,8 @@ namespace RVR
         static const std::string PIN_BASE_PATH; // https://github.com/PetRover/rProtocols/issues/5
 
         std::string getPinBasePath();
+
+        PinType type = PinType::PWM;
     public:
         PwmPin() { };
 
