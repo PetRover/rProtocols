@@ -3,6 +3,7 @@
 //
 
 #include "pins.h"
+#include "../rCore/easylogging++.h"
 #include <iostream>
 
 #pragma clang diagnostic push
@@ -44,6 +45,7 @@ namespace RVR
 
     void Pin::writeToFile(std::string path, std::string data)
     {
+        VLOG(3) << "Writing '"<<data<<"' to the file '"<<path<<"'";
         std::ofstream writeFile;
         writeFile.exceptions(std::ofstream::badbit | std::ofstream::failbit);
         try
@@ -171,17 +173,34 @@ namespace RVR
 // GpioPin Class Member functions
 // ==============================================================
 
-    GpioPin::GpioPin(int deviceNumber)
+
+    void GpioPin::initGpio(int deviceNumber, GpioDirection direction)
     {
+        VLOG(2) << "Initializing GPIO pin with device number: " << deviceNumber;
         this->deviceNumber = deviceNumber;
         this->pinDirectory = "gpio" + std::to_string(this->deviceNumber);
 
         // Always initialize output pins with a low value
-        if (this->getDirection() == GpioDirection::OUT)
+        if (direction == GpioDirection::OUT)
         {
             this->setValue(GpioValue::LOW);
         }
+        if (direction != GpioDirection::ERROR)
+        {
+            this->setDirection(direction);
+        }
 
+    }
+
+    GpioPin::GpioPin(int deviceNumber)
+    {
+        this->initGpio(deviceNumber, GpioDirection::ERROR);
+    }
+
+
+    GpioPin::GpioPin(int deviceNumber, GpioDirection direction)
+    {
+        this->initGpio(deviceNumber, direction);
     }
 
     std::string GpioPin::getPinBasePath()
@@ -227,6 +246,27 @@ namespace RVR
         return value; // TODO handle bad data read error
     }
 
+
+    int GpioPin::setDirection(GpioDirection direction)
+    {
+        switch (direction)
+        {
+            case GpioDirection::IN:
+                VLOG(3) << "Setting GPIO pin ("<<this->deviceNumber<<") to: in";
+                this->writeToProperty(PinProperty::DIRECTION, "in");
+                break;
+            case GpioDirection::OUT:
+                VLOG(3) << "Setting GPIO pin ("<<this->deviceNumber<<") to: out";
+                this->writeToProperty(PinProperty::DIRECTION, "out");
+                break;
+            default:
+                LOG(WARNING) << "Trying to set GPIO pin ("<<this->deviceNumber<<") to an unknown direction";
+                return -1;
+
+        }
+        return 0;
+    }
+
     GpioDirection GpioPin::getDirection()
     {
         GpioDirection direction;
@@ -254,6 +294,7 @@ namespace RVR
 
     AdcPin::AdcPin(int deviceNumber)
     {
+        VLOG(2) << "Initializing ADC pin with device number: " << deviceNumber;
         this->deviceNumber = deviceNumber;
         this->pinDirectory = "AIN" + std::to_string(deviceNumber);
     }
@@ -275,6 +316,7 @@ namespace RVR
 
     PwmPin::PwmPin(int deviceNumber)
     {
+        VLOG(2) << "Initializing PWM pin with device number: " << deviceNumber;
         this->deviceNumber = deviceNumber;
         this->pinDirectory = "pwm" + std::to_string(this->deviceNumber);
     }

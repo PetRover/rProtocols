@@ -96,13 +96,18 @@ namespace RVR
         static const std::string PIN_BASE_PATH;
 
         std::string getPinBasePath(); // https://github.com/PetRover/rProtocols/issues/5
-    public:
 
+        // sets the direction of the GPIO
+        int setDirection(GpioDirection direction);
+    public:
+        void initGpio(int deviceNumber, GpioDirection direction);
 
         GpioPin() { }
 
         // construct a GPIO pin object and set the direction
         GpioPin(int deviceNumber);
+
+        GpioPin(int deviceNumber, GpioDirection direction);
 
         // Set the value of the the GPIO
         int setValue(GpioValue value);
