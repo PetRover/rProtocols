@@ -35,7 +35,7 @@ namespace RVR
         ADC_VALUE,  // Analog value from the ADC
         PWM_DUTY,
         PWM_PERIOD,
-        PWM_RUN
+        PWM_ENABLE
     };
 
 

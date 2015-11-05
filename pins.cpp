@@ -35,11 +35,11 @@ namespace RVR
             case PinProperty::ADC_VALUE:
                 return this->getPinBasePath() + "/ocp.2/helper.14/" + this->pinDirectory;
             case PinProperty::PWM_DUTY:
-                return this->getPinBasePath() + this->pinDirectory + "/duty_ns";
+                return this->getPinBasePath() + this->pinDirectory + "/duty_cycle";
             case PinProperty::PWM_PERIOD:
-                return this->getPinBasePath() + this->pinDirectory + "/period_ns";
-            case PinProperty::PWM_RUN:
-                return this->getPinBasePath() + this->pinDirectory + "/run";
+                return this->getPinBasePath() + this->pinDirectory + "/period";
+            case PinProperty::PWM_ENABLE:
+                return this->getPinBasePath() + this->pinDirectory + "/enable";
         }
     }
 
@@ -315,10 +315,23 @@ namespace RVR
 // ==============================================================
 
     PwmPin::PwmPin(int deviceNumber)
+    //Within this function, the "deviceNumber" is turned into a PWM directory.
+    //The directory needs to be in the format /pwmchip#/pwm#. It takes the most sig.
+    //bit, and if 1 assigns pwmchip2 and if 0, assigns pwmchip0. Takes least sig. bit
+    //if 1 makes pwm1, if 0 makes pwm0.
     {
-        VLOG(2) << "Initializing PWM pin with device number: " << deviceNumber;
-        this->deviceNumber = deviceNumber;
-        this->pinDirectory = "pwm" + std::to_string(this->deviceNumber);
+        if(deviceNumber > 3){
+            VLOG(2) << "Invalid PWM deviceNumber. Out of range";
+        }else
+        {
+            VLOG(2) << "Initializing PWM pin with device number: " << deviceNumber;
+            this->deviceNumber = deviceNumber;
+
+            std::string pwmChipNumber = (this->deviceNumber & 0x02) ? "2" : "0";
+            std::string pwmNumber = std::to_string(this->deviceNumber & 0x01);
+            this->pinDirectory = "pwmchip" + pwmChipNumber + "/pwm" + pwmNumber;
+            VLOG(2) << "Using pinDirectory" + this->pinDirectory;
+        }
     }
 
     std::string PwmPin::getPinBasePath()
@@ -362,11 +375,11 @@ namespace RVR
     {
         if (enable)
         {
-            this->writeToProperty(PinProperty::PWM_RUN, 1);
+            this->writeToProperty(PinProperty::PWM_ENABLE, 1);
         }
         else
         {
-            this->writeToProperty(PinProperty::PWM_RUN, 0);
+            this->writeToProperty(PinProperty::PWM_ENABLE, 0);
         }
         return 0;
     }
