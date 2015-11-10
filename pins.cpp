@@ -17,7 +17,7 @@
 namespace RVR
 {
     const std::string GpioPin::PIN_BASE_PATH = "/sys/class/gpio/";
-    const std::string AdcPin::PIN_BASE_PATH = "/sys/devices/"; // TODO make this the correct path
+    const std::string AdcPin::PIN_BASE_PATH = "/sys/bus/iio/devices/iio:device0/";
     const std::string PwmPin::PIN_BASE_PATH = "/sys/class/pwm/";
 
 // ==============================================================
@@ -296,7 +296,7 @@ namespace RVR
     {
         VLOG(2) << "Initializing ADC pin with device number: " << deviceNumber;
         this->deviceNumber = deviceNumber;
-        this->pinDirectory = "AIN" + std::to_string(deviceNumber);
+        this->pinDirectory = "in_voltage" + std::to_string(deviceNumber) + "_raw";
     }
 
     std::string AdcPin::getPinBasePath()
