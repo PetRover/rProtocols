@@ -33,7 +33,7 @@ namespace RVR
             case PinProperty::DIRECTION:
                 return this->getPinBasePath() + this->pinDirectory + "/direction";
             case PinProperty::ADC_VALUE:
-                return this->getPinBasePath() + "/ocp.2/helper.14/" + this->pinDirectory;
+                return this->getPinBasePath() + this->pinDirectory;
             case PinProperty::PWM_DUTY:
                 return this->getPinBasePath() + this->pinDirectory + "/duty_cycle";
             case PinProperty::PWM_PERIOD:
@@ -230,11 +230,11 @@ namespace RVR
         GpioValue value;
         std::string directionString = this->readStringFromProperty(PinProperty::VALUE);
 
-        if (directionString == "high")
+        if (directionString == "1")
         {
             value = GpioValue::HIGH;
         }
-        else if (directionString == "low")
+        else if (directionString == "0")
         {
             value = GpioValue::LOW;
         }
@@ -306,7 +306,7 @@ namespace RVR
 
     double AdcPin::getValue()
     {
-        double value = this->readDoubleFromProperty(PinProperty::ADC_VALUE);
+        double value = this->readDoubleFromProperty(PinProperty::ADC_VALUE) * 1.8 / 4096;
         return value;
     }
 
